@@ -1,0 +1,12 @@
+apiVersion: session.autodev/v1
+kind: DevSession
+metadata:
+  labels:
+    app.kubernetes.io/name: devsession
+    app.kubernetes.io/instance: devsession-sample
+    app.kubernetes.io/part-of: autodev-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: autodev-operator
+  name: devsession-sample
+spec:
+  # TODO(user): Add fields here

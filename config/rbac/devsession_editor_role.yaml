@@ -1,0 +1,31 @@
+# permissions for end users to edit devsessions.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: devsession-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: autodev-operator
+    app.kubernetes.io/part-of: autodev-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: devsession-editor-role
+rules:
+- apiGroups:
+  - session.autodev
+  resources:
+  - devsessions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - session.autodev
+  resources:
+  - devsessions/status
+  verbs:
+  - get

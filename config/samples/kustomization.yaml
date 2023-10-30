@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- session_v1_devsession.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples
