@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,14 +29,19 @@ type DevSessionSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of DevSession. Edit devsession_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	UseIDE     bool           `json:"useide"`
+	Persistant bool           `json:"persistant"`
+	Active     bool           `json:"active"`
+	PodSpec    corev1.PodSpec `json:"podspec"`
 }
 
 // DevSessionStatus defines the observed state of DevSession
 type DevSessionStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	Active            bool                     `json:"active"`
+	ContainerStatuses []corev1.ContainerStatus `json:"containerstatuses"`
 }
 
 //+kubebuilder:object:root=true
