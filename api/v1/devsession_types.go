@@ -29,10 +29,11 @@ type DevSessionSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	UseIDE     bool           `json:"useide"`
-	Persistant bool           `json:"persistant"`
-	Active     bool           `json:"active"`
-	PodSpec    corev1.PodSpec `json:"podspec"`
+	UseIDE          bool           `json:"useide"`
+	Persistant      bool           `json:"persistant"`
+	StorageCapacity string         `json:"storagecapacity"`
+	Active          bool           `json:"active"`
+	PodSpec         corev1.PodSpec `json:"podspec"`
 }
 
 // DevSessionStatus defines the observed state of DevSession

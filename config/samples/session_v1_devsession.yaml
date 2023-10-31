@@ -11,6 +11,7 @@ metadata:
 spec:
   useide: true
   persistant: true
+  storagecapacity: 50Mi
   active: true
   podspec:
     containers:

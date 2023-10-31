@@ -7253,12 +7253,15 @@ spec:
                 required:
                 - containers
                 type: object
+              storagecapacity:
+                type: string
               useide:
                 type: boolean
             required:
             - active
             - persistant
             - podspec
+            - storagecapacity
             - useide
             type: object
           status:

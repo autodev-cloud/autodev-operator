@@ -20,6 +20,7 @@ import (
 	"context"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -49,6 +50,7 @@ type DevSessionReconciler struct {
 //+kubebuilder:rbac:groups="",resources=pods/status,verbs=get
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=services/status,verbs=get
+//+kubebuilder:rbac:groups="",resources=persistantvolumeclaims,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="networking.k8s.io",resources=ingresses,verbs=get;update;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -190,6 +192,43 @@ func (r *DevSessionReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		} else {
 			logger.Error(err, "failed to fetch service", "devsession", req.NamespacedName)
 			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
+	}
+
+	if devSession.Spec.Persistant {
+		// ensure all necessary pvcs are created
+		var sessionStorage corev1.PersistentVolumeClaim
+		if err := r.Get(ctx, req.NamespacedName, &sessionStorage); err != nil {
+			if client.IgnoreNotFound(err) == nil {
+				logger.Info("session pvc not found", "devsession", req.NamespacedName)
+				logger.Info("creating session pvcsession pvc not found", "devsession", req.NamespacedName)
+				sessionStorage = corev1.PersistentVolumeClaim{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      req.Name,
+						Namespace: req.Namespace,
+					},
+					Spec: corev1.PersistentVolumeClaimSpec{
+						AccessModes: []v1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceStorage: resource.MustParse(devSession.Spec.StorageCapacity),
+							},
+						},
+					},
+				}
+				if err := ctrl.SetControllerReference(&devSession, &sessionStorage, r.Scheme); err != nil {
+					logger.Error(err, "unable to set controller reference to session storage pvc", "devsession", req.NamespacedName)
+					return ctrl.Result{RequeueAfter: time.Minute}, err
+				}
+				if err := r.Create(ctx, &sessionStorage); err != nil {
+					logger.Error(err, "unable to create session storage pvc", "devsession", req.NamespacedName)
+					return ctrl.Result{}, err
+				}
+				logger.Info("created session storage pvc", "devsession", req.NamespacedName)
+			} else {
+				logger.Error(err, "failed to fetch session storage pvc", "devsession", req.NamespacedName)
+				return ctrl.Result{}, client.IgnoreNotFound(err)
+			}
 		}
 	}
 

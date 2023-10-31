@@ -7,6 +7,18 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - persistantvolumeclaims
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - pods
   verbs:
   - get
