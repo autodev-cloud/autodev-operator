@@ -40,7 +40,7 @@ type DevSessionStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Active            bool                     `json:"active"`
+	Ready             bool                     `json:"ready"`
 	ContainerStatuses []corev1.ContainerStatus `json:"containerstatuses"`
 }
 

@@ -7264,8 +7264,6 @@ spec:
           status:
             description: DevSessionStatus defines the observed state of DevSession
             properties:
-              active:
-                type: boolean
               containerstatuses:
                 items:
                   description: ContainerStatus contains details for the current status
@@ -7516,9 +7514,11 @@ spec:
                   - restartCount
                   type: object
                 type: array
+              ready:
+                type: boolean
             required:
-            - active
             - containerstatuses
+            - ready
             type: object
         type: object
     served: true
