@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -119,7 +120,7 @@ func (r *DevSessionReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				},
 			}
 			if err := ctrl.SetControllerReference(&devSession, &deploy, r.Scheme); err != nil {
-				logger.Error(err, "unable to set controller reference", "devsession", req.NamespacedName)
+				logger.Error(err, "unable to set controller reference to deploy", "devsession", req.NamespacedName)
 				return ctrl.Result{RequeueAfter: time.Minute}, err
 			}
 
@@ -143,10 +144,53 @@ func (r *DevSessionReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		logger.Error(err, "failed to fetch pod", "devsession", req.NamespacedName)
 		return ctrl.Result{Requeue: true}, client.IgnoreNotFound(err)
 	}
+
+	if len(pods.Items) == 0 {
+		logger.Info("pods not created yet", "devsession", req.NamespacedName)
+		return ctrl.Result{Requeue: true}, nil
+	}
+
 	devSession.Status.ContainerStatuses = pods.Items[0].Status.ContainerStatuses
 	if err := r.Status().Update(ctx, &devSession); err != nil {
 		logger.Error(err, "failed to update devsession status", "devsession", req.NamespacedName)
 		return ctrl.Result{}, err
+	}
+
+	// ensure service is created
+	var svc corev1.Service
+	if err := r.Get(ctx, req.NamespacedName, &svc); err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			logger.Info("service not found", "devsession", req.NamespacedName)
+			logger.Info("creating service", "devsession", req.NamespacedName)
+			svc := corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      req.Name,
+					Namespace: req.Namespace,
+				},
+				Spec: corev1.ServiceSpec{
+					Selector: map[string]string{"session": req.Name},
+					Ports: []corev1.ServicePort{
+						{
+							Name:       "ide",
+							TargetPort: intstr.FromInt(8443),
+							Port:       8443,
+						},
+					},
+				},
+			}
+			if err := ctrl.SetControllerReference(&devSession, &svc, r.Scheme); err != nil {
+				logger.Error(err, "unable to set controller reference to svc", "devsession", req.NamespacedName)
+				return ctrl.Result{RequeueAfter: time.Minute}, err
+			}
+			if err := r.Create(ctx, &svc); err != nil {
+				logger.Error(err, "unable to create service", "devsession", req.NamespacedName)
+				return ctrl.Result{}, err
+			}
+			logger.Info("created service for devsession", "devsession", req.NamespacedName)
+		} else {
+			logger.Error(err, "failed to fetch service", "devsession", req.NamespacedName)
+			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
 	}
 
 	return ctrl.Result{}, nil
